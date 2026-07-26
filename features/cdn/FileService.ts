@@ -1,0 +1,1 @@
+export { saveFile as default } from "@/lib/shared/cdn/file.service"

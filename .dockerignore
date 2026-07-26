@@ -1,0 +1,27 @@
+node_modules/
+.next/
+.generated/
+dist
+out
+build
+*.tsbuildinfo
+.git
+npm-debug.log
+.coverage
+.coverage.*
+
+# All env files — secrets provided at runtime via docker-compose
+.env
+.env.*
+
+# Local databases (created/mounted as volumes at runtime)
+prisma/*.db
+prisma/db/
+
+# User-uploaded files (mounted as volumes in production)
+public/avatars/
+public/covers/
+
+# Deployment artifacts
+/deploy/
+.deploy/

@@ -1,0 +1,245 @@
+{
+  "common": {
+    "save": "Save",
+    "saveError": "Failed to save. Please check the following fields: [{fields}].",
+    "link": {
+      "add": "Add",
+      "delete": "Delete"
+    }
+  },
+  "cover": {
+    "empty": "No cover image",
+    "emptyDesc": "Upload a cover image.",
+    "select": "Select cover"
+  },
+  "nav": {
+    "home": "Home",
+    "projects": "Projects",
+    "members": "Members",
+    "statistics": "Statistics",
+    "about": "About",
+    "rules": "Rules",
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "config": "Configurator",
+    "myProfile": "My profile",
+    "security": "Security"
+  },
+  "metadata": {
+    "title": "Programmers & Cookies",
+    "description": "Create, code, and eat cookies!"
+  },
+  "configurator": {
+    "menu": {
+      "main": "Main",
+      "projects": "Projects",
+      "admin": "Admin",
+      "profile": "Profile",
+      "profileDesc": "General profile settings",
+      "skills": "Skills",
+      "skillsDesc": "Here you can indicate your skills",
+      "addProject": "Add project",
+      "addProjectDesc": "Add your wonderful project here!",
+      "myProjects": "My projects",
+      "myProjectsDesc": "Index of your projects",
+      "tags": "Tags",
+      "security": "Security"
+    },
+    "profile": {
+      "nickname": "Nickname",
+      "nicknameDesc": "What name will others recognize you by?",
+      "about": "Tell us about yourself",
+      "aboutDesc": "Write anything you want so the world can learn about you.",
+      "avatar": "Avatar",
+      "avatarDesc": "How will others see you?",
+      "avatarUpload": "Upload a new avatar",
+      "avatarSize": "Please select an image smaller than 10MB",
+      "cover": "Cover image",
+      "coverDesc": "You can choose a cover image",
+      "links": "Links",
+      "linksDesc": "Add links to your social media, pages or projects — anything you want to share"
+    },
+    "security": {
+      "title": "Security",
+      "passkeys": "Passkeys",
+      "passkeysDesc": "Passkeys let you sign in without a token — just use your device biometrics or PIN.",
+      "addPasskey": "Add passkey",
+      "noPasskeys": "No passkeys registered yet.",
+      "deletePasskey": "Delete",
+      "addDisplayName": "Passkey name",
+      "addDisplayNamePlaceholder": "e.g. MacBook Touch ID",
+      "adding": "Registering...",
+      "deleting": "Deleting...",
+      "errorNoKratos": "Account is not linked to the auth service. Try signing out and back in.",
+      "errorAdd": "Failed to register passkey.",
+      "errorDelete": "Failed to delete passkey.",
+      "createdAt": "Added"
+    },
+    "skills": {
+      "progLangTitle": "Programming languages",
+      "progLangDesc": "Which programming languages do you know?",
+      "progLangPlaceholder": "Choose your stack",
+      "osTitle": "Operating systems",
+      "osDesc": "Which OS do you use?",
+      "osPlaceholder": "Choose your OS",
+      "hobbyTitle": "Hobbies",
+      "hobbyDesc": "What are your hobbies?",
+      "hobbyPlaceholder": "Choose your hobbies",
+      "save": "Save"
+    },
+    "project": {
+      "indexTitle": "My projects",
+      "titleField": "Project name",
+      "titleFieldDesc": "What will you call your \"ship\"?",
+      "descField": "Tell us about this project",
+      "descFieldDesc": "Write anything you want so the world can learn about it.",
+      "tags": "Tags",
+      "tagsDesc": "Add tags to your project. These can be programming languages and technologies used.",
+      "links": "Links",
+      "linksDesc": "Add links to the project or information about it",
+      "cover": "Cover image",
+      "coverDesc": "You can add a custom image to stand out",
+      "devStage": "Development stage",
+      "devStageDesc": "What stage of development is the project currently at?",
+      "openForMembers": "Open for new contributors",
+      "openForMembersDesc": "Does this project need more contributors to grow?",
+      "deleteProject": "Delete project",
+      "edit": "Edit",
+      "unlink": "Unlink"
+    }
+  },
+  "footer": {
+    "support": "Support us",
+    "telegram": "Telegram",
+    "github": "GitHub"
+  },
+  "about": {
+    "title": "About us",
+    "nav": {
+      "rules": "Rules",
+      "recommendations": "Recommendations",
+      "metaQuestion": "Meta-questions",
+      "contact": "Contact",
+      "support": "Support us"
+    },
+    "rules": {
+      "title": "Rules",
+      "quote": "Don't be toxic, be like a cookie — sweet and warm :3",
+      "forbidden": "Prohibited",
+      "rule1": "1. Deliberate use of profanity or insults directed at other chat members.",
+      "rule2": "2. Especially malicious flooding and spam.",
+      "rule2detail": "More than three identical messages in a row, or links to external sites unrelated to the chat's topics.",
+      "rule3": "3. Systematic or deliberate communication in Russian.",
+      "rule3detail1": "Our community is Ukrainian-speaking. We strive to support, spread and grow Ukrainian content!",
+      "rule3detail2": "We understand that for some it may be difficult to switch to Ukrainian immediately. We encourage you not to be afraid, not to be ashamed of mistakes, but to practice and gradually integrate into our community.",
+      "rule4": "4. Commercial advertising without prior approval from the administration is prohibited.",
+      "rule4detail1": "Within our community, without administration approval, you are welcome to advertise your personal projects or non-commercial channels.",
+      "rule4detail2": "If you are a commercial project, recruiting agency, company, etc., please contact the administration regarding advertising via <link>> Shokolapka <</link>.",
+      "punishmentTitle": "Consequences for violations",
+      "punishment1": "After two warnings, the administration has the right to mute or ban a member.",
+      "punishment2": "The administration also reserves the right to ban a member if they threaten the cozy atmosphere of the chat.",
+      "appealTitle": "Appeal",
+      "appeal": "If you disagree with an administration decision, you can appeal it via <link>> Shokolapka <</link>."
+    },
+    "recommendations": {
+      "title": "Recommendations",
+      "codeTitle": "Sharing code",
+      "codeP1": "It is recommended to share code snippets via version control systems (Git) or online editors.",
+      "codeOurEditor": "Our editor:",
+      "codePopular": "Among the popular ones:",
+      "codeInline": "Short code snippets can be sent directly in messages — just wrap them in <code>```</code> on both sides and send.",
+      "codeExample": "Message example:",
+      "codeResult": "Result:",
+      "metaTitle": "Meta-questions",
+      "metaP1": "It is recommended to read this resource before asking a question:"
+    },
+    "contact": {
+      "title": "Contact",
+      "p1": "You can reach us via -> <link>bot contact</link> <-",
+      "or": "or"
+    }
+  },
+  "support": {
+    "title": "Support us",
+    "p1": "Aww, how sweet that you decided to peek in here :3",
+    "p2": "You can support us by spreading the word to your friends, acquaintances and community members. Word-of-mouth support is incredibly important to us!",
+    "p3": "Got ideas on how to make the community even better? Write to > <link>Shokolapka</link> < ~ she'll pass it all along :3",
+    "shareTitle": "Share us",
+    "shareText": "Programmers & Cookies — create, code and eat cookies!",
+    "shareCopied": "Link copied!"
+  },
+  "project": {
+    "title": "Projects",
+    "description": "Here you'll find projects developed by members of our community.",
+    "addProject": "Add project",
+    "orderBy": "Order by:",
+    "unavailable": "The projects catalog is temporarily unavailable. Please try again later."
+  },
+  "user": {
+    "title": "Members",
+    "description": "Here you'll find members of our community."
+  },
+  "statistic": {
+    "title": "Statistics",
+    "description": "Languages and technologies used by members of our community.",
+    "noData": "No data to display yet.",
+    "chart": {
+      "title": "Technology popularity",
+      "description": "How many people listed each technology in their profile",
+      "voters": "· {count} members voted",
+      "votersCount": "{count, plural, one {# person} other {# people}}",
+      "majorLabel": "Primary",
+      "secondaryLabel": "Secondary",
+      "learningLabel": "Learning",
+      "majorLegend": "Primary — main language",
+      "secondaryLegend": "Secondary — know it well",
+      "learningLegend": "Learning — currently studying",
+      "footnote": "One person can list multiple languages — so the sum may exceed the total number of members.",
+      "noData": "No data to display yet."
+    }
+  },
+  "signin": {
+    "title": "Sign in",
+    "or": "or",
+    "viaPasskey": "Sign in with Passkey",
+    "passKeyNicknamePlaceholder": "Your nickname",
+    "errorPasskey": "Failed to sign in with Passkey.",
+    "errorPasskeyNoCredentials": "No passkey registered. Add a passkey in security settings first.",
+    "errorPasskeyNotFound": "No user found with that nickname.",
+    "viaTelegramDesc": "Sign in with your Telegram account",
+    "errorTelegram": "Failed to sign in with Telegram.",
+    "errorAccessDenied": "Access denied. You must be a member of the required community.",
+    "miniAppSignIn": "Signing in via Telegram..."
+  },
+  "home": {
+    "hero": {
+      "title": "A community of programmers, creative stars <accent>and</accent> cookies 🍪",
+      "subtitle": "Are you into programming, computers, electronics, anime or snacks??",
+      "subtitleCreative": "Or maybe, deep down — creativity?",
+      "subtitleJoin": "Looks like you're exactly the ingredient our cookies were missing!",
+      "telegramBtn": "Telegram chat",
+      "joinTelegramChatBtn": "Join us on Telegram",
+      "projectsBtn": "Projects catalog",
+      "whoLink": "Who are we?",
+      "findLink": "Where to find us?"
+    },
+    "about": {
+      "title": "Who are we? What are we?",
+      "p1": "Our community mainly revolves around IT (programming, computers, electronics), but our conversations are by no means limited to just that ;)",
+      "p2": "At the heart of our community is the development of talents and beloved hobbies.",
+      "p3": "Here you can discuss your hobbies and interests, meet and make friends, organize to create projects, ask questions and find solutions.",
+      "p4": "I believe this community will become a wonderful place where people can share their passions, help each other, unite to build projects together, and simply enjoy great conversations.",
+      "moreLink": "> More about us"
+    },
+    "projects": {
+      "sectionTitle": "Just look at what our members have created!",
+      "addProject": "++> Add your project",
+      "seeMore": "-> See more (<accent>{count}</accent> more projects)"
+    },
+    "invitation": {
+      "greeting": "Hi! I'm Shokolapka — the mascot of this slightly crazy community",
+      "welcome": "Glad to see you ~",
+      "joinHint": "⌄ You can join us via the links below ⌄"
+    }
+  }
+}
