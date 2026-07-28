@@ -1,11 +1,10 @@
 "use server"
 
-import IUserService, { User } from "@/features/user/user.service.interface"
-import UserService from "@/features/user/UserService"
+import { searchUsersByNickname } from "@/lib/kratos-identities"
+import { UserDto } from "@/features/user/UserDto"
 
-const userService: IUserService = new UserService()
-
-export default async function userFindAction(name?: string): Promise<User[]> {
-    var result = await userService.find(name)
-    return result
+export default async function userFindAction(name?: string): Promise<UserDto[]> {
+    if (!name) return []
+    const results = await searchUsersByNickname(name)
+    return results.map(u => ({ id: u.kratosId, nickname: u.nickname, image: u.avatarUrl }))
 }

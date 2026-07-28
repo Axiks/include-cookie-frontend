@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
+import { findIdentityByNickname } from "@/lib/kratos-identities"
 
 const KRATOS_PUBLIC_URL = process.env.KRATOS_PUBLIC_URL ?? "http://kratos:4433"
 
@@ -12,12 +12,10 @@ export async function GET(req: NextRequest) {
     const nickname = req.nextUrl.searchParams.get("nickname")
     if (!nickname) return NextResponse.json({ error: "nickname required" }, { status: 400 })
 
-    // Look up tgId from our DB so the user doesn't need to know their Telegram ID
-    const user = await prisma.user.findFirst({
-        where: { nickname },
-        select: { tgId: true },
-    })
-    if (!user?.tgId) return NextResponse.json({ error: "user_not_found" }, { status: 404 })
+    // Look up tgId from Kratos so the user doesn't need to know their Telegram ID
+    const identity = await findIdentityByNickname(nickname)
+    if (!identity?.tgId) return NextResponse.json({ error: "user_not_found" }, { status: 404 })
+    const user = { tgId: identity.tgId }
 
     // Step 1: Create a browser login flow
     const flow1Res = await fetch(`${KRATOS_PUBLIC_URL}/self-service/login/browser`, {

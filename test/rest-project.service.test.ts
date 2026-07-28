@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest"
 
-// RestProjectService is a pure REST adapter over catalog-client; hydration uses UserService.
+// RestProjectService is a pure REST adapter over catalog-client; hydration uses kratos-identities.
 const catalogMock = vi.hoisted(() => ({
   getJson: vi.fn(),
   getJsonOrNull: vi.fn(),
@@ -11,10 +11,8 @@ const catalogMock = vi.hoisted(() => ({
 }))
 vi.mock("@/lib/catalog-client", () => ({ catalog: catalogMock }))
 
-const userMock = vi.hoisted(() => ({ getByKratosIdsLight: vi.fn().mockResolvedValue([]) }))
-vi.mock("@/features/user/UserService", () => ({
-  default: class { constructor() { return userMock as any } },
-}))
+const kratosMock = vi.hoisted(() => ({ getProfilesByKratosIds: vi.fn().mockResolvedValue(new Map()) }))
+vi.mock("@/lib/kratos-identities", () => kratosMock)
 
 import RestProjectService from "@/lib/catalog/RestProjectService"
 
@@ -33,7 +31,7 @@ describe("RestProjectService — REST adapter", () => {
   let svc: RestProjectService
   beforeEach(() => {
     Object.values(catalogMock).forEach(f => f.mockReset())
-    userMock.getByKratosIdsLight.mockResolvedValue([])
+    kratosMock.getProfilesByKratosIds.mockResolvedValue(new Map())
     svc = new RestProjectService()
   })
 

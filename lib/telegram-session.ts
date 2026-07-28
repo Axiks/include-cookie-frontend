@@ -17,8 +17,8 @@ function key(): Uint8Array {
     return new TextEncoder().encode(secret)
 }
 
-export async function storeTelegramToken(userId: string, kratosId: string): Promise<string> {
-    return new SignJWT({ userId, kratosId })
+export async function storeTelegramToken(kratosId: string): Promise<string> {
+    return new SignJWT({ kratosId })
         .setProtectedHeader({ alg: "HS256" })
         .setAudience(AUDIENCE)
         .setIssuedAt()
@@ -26,11 +26,11 @@ export async function storeTelegramToken(userId: string, kratosId: string): Prom
         .sign(key())
 }
 
-export async function consumeTelegramToken(token: string): Promise<{ userId: string; kratosId: string } | null> {
+export async function consumeTelegramToken(token: string): Promise<{ kratosId: string } | null> {
     try {
         const { payload } = await jwtVerify(token, key(), { audience: AUDIENCE })
-        if (typeof payload.userId !== "string" || typeof payload.kratosId !== "string") return null
-        return { userId: payload.userId, kratosId: payload.kratosId }
+        if (typeof payload.kratosId !== "string") return null
+        return { kratosId: payload.kratosId }
     } catch (e) {
         if (e instanceof joseErrors.JOSEError) return null
         throw e

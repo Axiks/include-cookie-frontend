@@ -1,27 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createHash, createHmac } from 'crypto'
-import { userRegisterViaWidget } from '@/features/auth/Auth'
+import { authClient, AuthClientError } from '@/lib/auth-client'
 import { getChatMembershipGate } from '@/features/auth/chat-gate'
 import { storeTelegramToken } from '@/lib/telegram-session'
 import type { TelegramWidgetPayload } from '@/features/auth/telegram-auth.interface'
-
-/**
- * Verifies the hash sent by the Telegram Login Widget.
- * https://core.telegram.org/widgets/login#checking-authorization
- */
-function verifyWidgetHash(params: TelegramWidgetPayload, botToken: string): boolean {
-    const rawParams = params as unknown as Record<string, string | undefined>
-    const hash = rawParams['hash']
-    if (!hash) return false
-    const dataCheckString = Object.keys(rawParams)
-        .filter(k => k !== 'hash' && rawParams[k] !== undefined)
-        .sort()
-        .map(k => `${k}=${rawParams[k]}`)
-        .join('\n')
-    const secretKey = createHash('sha256').update(botToken).digest()
-    const expected = createHmac('sha256', secretKey).update(dataCheckString).digest('hex')
-    return expected === hash
-}
 
 // Resolves the public-facing origin even behind a reverse proxy / Cloudflare tunnel.
 // req.url contains the internal address (127.0.0.1:3000); we need the real domain.
@@ -54,32 +35,27 @@ export async function GET(req: NextRequest) {
         return NextResponse.redirect(signinRedirect(origin, { error: 'invalid_telegram_data' }, next))
     }
 
-    const botToken = process.env.BOT_TOKEN
-    if (!botToken || !verifyWidgetHash(params, botToken)) {
-        return NextResponse.redirect(signinRedirect(origin, { error: 'invalid_telegram_hash' }, next))
-    }
-
-    // Reject stale auth data (older than 24 hours)
-    if (Date.now() / 1000 - Number(params.auth_date) > 86400) {
-        return NextResponse.redirect(signinRedirect(origin, { error: 'telegram_auth_expired' }, next))
-    }
-
+    // Hash/expiry verification now happens auth-service-side (it also holds BOT_TOKEN).
+    // The gate check runs on the not-yet-verified id first — harmless (it's a read-only
+    // Telegram API call), and no identity is ever created unless the login call below
+    // also succeeds, which requires a genuinely valid hash.
     const gate = getChatMembershipGate()
     if (!await gate.checkAccess(params.id)) {
         return NextResponse.redirect(signinRedirect(origin, { error: 'access_denied' }, next))
     }
 
     try {
-        const user = await userRegisterViaWidget({
-            tgId: params.id,
-            username: params.username,
-            displayName: [params.first_name, params.last_name].filter(Boolean).join(' '),
-            photoUrl: params.photo_url,
-        })
-
-        const token = await storeTelegramToken(user.id, user.kratosId ?? '')
+        const { kratosId } = await authClient.telegramWidgetLogin(params as unknown as Record<string, string>)
+        const token = await storeTelegramToken(kratosId)
         return NextResponse.redirect(signinRedirect(origin, { tg_token: token }, next))
     } catch (e) {
+        if (e instanceof AuthClientError && e.status === 401) {
+            const code = (e.body as { error?: string } | undefined)?.error
+            const error = code === 'expired' ? 'telegram_auth_expired'
+                : code === 'no_user' ? 'invalid_telegram_data'
+                : 'invalid_telegram_hash'
+            return NextResponse.redirect(signinRedirect(origin, { error }, next))
+        }
         console.error('[telegram/callback] Error:', e)
         return NextResponse.redirect(signinRedirect(origin, { error: 'telegram_server_error' }, next))
     }

@@ -1,6 +1,5 @@
 `use client`
 
-import { User } from "@/features/user/user.service.interface";
 import { LinkBreak2Icon, Pencil1Icon, PersonIcon, PlusIcon } from "@radix-ui/react-icons";
 import { Box, Button, Flex, TextField, Text, Badge, Card } from "@radix-ui/themes";
 import { Dispatch, KeyboardEvent, SetStateAction, useEffect, useState } from "react";

@@ -1,17 +1,29 @@
 import NextAuth, { User } from "next-auth"
-import { prisma } from "@/lib/prisma"
 import Credentials from "next-auth/providers/credentials"
 import type { Provider } from "next-auth/providers"
 import { authConfig } from "./auth.config"
 import { consumePasskeyToken } from "./lib/passkey-session"
 import { consumeTelegramToken } from "./lib/telegram-session"
+import { fetchKratosIdentity } from "./features/auth/kratos-bridge"
 
-function avatarUrl(raw: string | undefined): string | undefined {
+function avatarUrl(raw: string | null | undefined): string | undefined {
   if (!raw) return undefined
   return raw.startsWith('http') ? raw : '/cdn/avatars/' + raw
 }
 
 const KRATOS_PUBLIC_URL = process.env.KRATOS_PUBLIC_URL ?? "http://kratos:4433"
+
+// Builds the NextAuth session user straight from Kratos traits — the sole profile store.
+async function toSessionUser(kratosId: string): Promise<User | null> {
+  const identity = await fetchKratosIdentity(kratosId)
+  if (!identity) return null
+  return {
+    id: kratosId,
+    name: identity.nickname ?? undefined,
+    image: avatarUrl(identity.avatarUrl),
+    kratosId,
+  } satisfies User
+}
 
 const providers: Provider[] = [
     Credentials({
@@ -33,18 +45,7 @@ const providers: Provider[] = [
         const kratosId: string | undefined = sessionData.identity?.id
         if (!kratosId) return null
 
-        const dbUser = await prisma.user.findUnique({
-          where: { kratosId },
-          include: { avatars: { include: { image: true } } },
-        })
-        if (!dbUser) return null
-
-        return {
-          id: dbUser.id,
-          name: dbUser.nickname ?? undefined,
-          image: avatarUrl(dbUser.avatars[0]?.image.src),
-          kratosId,
-        } satisfies User
+        return await toSessionUser(kratosId)
       },
     }),
     Credentials({
@@ -60,23 +61,12 @@ const providers: Provider[] = [
         const data = await consumeTelegramToken(verifyToken)
         if (!data) return null
 
-        const dbUser = await prisma.user.findUnique({
-          where: { id: data.userId },
-          include: { avatars: { include: { image: true } } },
-        })
-        if (!dbUser) return null
-
-        return {
-          id: dbUser.id,
-          name: dbUser.nickname ?? undefined,
-          image: avatarUrl(dbUser.avatars[0]?.image.src),
-          kratosId: data.kratosId || undefined,
-        } satisfies User
+        return await toSessionUser(data.kratosId)
       },
     }),
     Credentials({
       id: 'passkey',
-      name: 'Passkey (Discoverable)',
+      name: 'Passkey',
       credentials: {
         verifyToken: { type: 'text' },
       },
@@ -87,18 +77,7 @@ const providers: Provider[] = [
         const data = await consumePasskeyToken(verifyToken)
         if (!data) return null
 
-        const dbUser = await prisma.user.findUnique({
-          where: { id: data.userId },
-          include: { avatars: { include: { image: true } } },
-        })
-        if (!dbUser) return null
-
-        return {
-          id: dbUser.id,
-          name: dbUser.nickname ?? undefined,
-          image: avatarUrl(dbUser.avatars[0]?.image.src),
-          kratosId: data.kratosId,
-        } satisfies User
+        return await toSessionUser(data.kratosId)
       },
     }),
 ]

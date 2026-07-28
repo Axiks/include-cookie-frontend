@@ -2,9 +2,7 @@
 
 import { redirect } from "next/navigation"
 import { auth } from "@/auth"
-import { resolveKratosId } from "@/features/auth/kratos-bridge"
 import { Link } from "@/lib/shared";
-import { ProjectMember, ProjectMemberDTO } from "@/app/configurator/project/_types/ProjectMember";
 import { Contributor, EditProject, IProjectService, WriteProject } from "@/lib/shared/project/project.service.interface";
 import ITagService, { WriteTag } from "@/lib/shared/tag-system/tag/service/tag.service.interface"
 import { FormState, fromErrorToFormState } from "@/lib/utils/form-utils"
@@ -62,7 +60,7 @@ export const saveProjectConfigForm = async (formState: FormState, formData: Form
 
     const session = await auth()
     // Contributors are keyed by sub (kratosId) — the cross-service user key.
-    const currentUserSub = session!.user!.kratosId ?? (await resolveKratosId(session!.user!.id!))
+    const currentUserSub = session!.user!.kratosId
     if (!currentUserSub) throw new Error("No kratos identity for current user")
 
     // const tagService: ITagService = getCatalog().tags()

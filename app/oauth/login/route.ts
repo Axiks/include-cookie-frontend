@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { hydraAdmin } from "@/lib/hydra"
-import { resolveKratosId } from "@/features/auth/kratos-bridge"
 import { getPublicOrigin } from "@/lib/public-origin"
 
 // Hydra redirects the browser here with ?login_challenge=... (URLS_LOGIN).
@@ -30,7 +29,7 @@ export async function GET(req: NextRequest) {
         const origin = getPublicOrigin(req)
 
         if (session?.user?.id) {
-            const subject = session.user.kratosId || (await resolveKratosId(session.user.id))
+            const subject = session.user.kratosId
             if (subject) {
                 const { data: accept } = await hydraAdmin.acceptOAuth2LoginRequest({
                     loginChallenge: challenge,

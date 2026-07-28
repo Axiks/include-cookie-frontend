@@ -1,7 +1,6 @@
 'use server'
 
 import { auth } from "@/auth"
-import { resolveKratosId } from "@/features/auth/kratos-bridge"
 import { Group } from "@/lib/shared/tag-system/group/service/group.service.interface"
 import { setUserTags } from "@/lib/catalog/user-tags"
 import { FormState } from "@/lib/utils/form-utils"
@@ -12,10 +11,7 @@ export const saveSkills = async (
   formData: FormData
 ) => {
     const session = await auth()
-    const userId = session?.user?.id
-    if(userId == undefined) throw new Error("Dont get user id")
-
-    const sub = session?.user?.kratosId ?? await resolveKratosId(userId)
+    const sub = session?.user?.kratosId
     if (!sub) throw new Error("No kratos identity for user")
 
     const itemsIdJsonData = formData.get("stacks")?.toString()

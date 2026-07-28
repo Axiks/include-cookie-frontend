@@ -1,15 +1,11 @@
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
-import { kratosAdmin } from "@/lib/kratos"
+import { authClient, type KratosPasskey } from "@/lib/auth-client"
 import { getTranslations } from "next-intl/server"
 import { Container, Heading, Section, Text } from "@radix-ui/themes"
 import PasskeyManager from "./_components/passkey-manager"
 
-export type KratosPasskey = {
-    id: string
-    display_name: string
-    added_at: string
-}
+export type { KratosPasskey }
 
 export default async function SecurityPage() {
     const session = await auth()
@@ -22,14 +18,9 @@ export default async function SecurityPage() {
 
     if (kratosId) {
         try {
-            const { data: identity } = await kratosAdmin.getIdentity({
-                id: kratosId,
-                includeCredential: ["webauthn"],
-            })
-            const config = identity.credentials?.webauthn?.config as { credentials?: KratosPasskey[] } | undefined
-            passkeys = config?.credentials ?? []
+            passkeys = await authClient.listPasskeys(kratosId)
         } catch {
-            // якщо Kratos недоступний — показуємо порожній список
+            // якщо auth-сервіс недоступний — показуємо порожній список
         }
     }
 

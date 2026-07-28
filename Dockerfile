@@ -2,9 +2,7 @@
 # Standalone build — context = repo ROOT.
 #   docker build -t pandc-web .
 #
-# DB: web uses PostgreSQL (database pandc_web on the shared pandc-db). The schema is applied at
-# deploy time by the one-shot pandc-migrate service (infra/migrate.Dockerfile, monorepo side) —
-# NOT baked here.
+# No database of its own — all profile/identity state lives in Ory Kratos (shared instance).
 
 FROM node:25-slim AS base
 RUN apt-get update && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
@@ -26,10 +24,6 @@ COPY . .
 ARG GIT_COMMIT=unknown
 RUN echo "\nGIT_COMMIT=${GIT_COMMIT}" >> .env.local
 
-# Generate the web Prisma client (folder schema — models live in prisma/models/). A dummy postgres
-# URL satisfies the datasource — `generate` never connects.
-RUN DATABASE_URL="postgresql://x:x@localhost:5432/x" npx prisma generate --schema prisma/
-
 RUN npm run build
 
 FROM base AS runner
@@ -43,9 +37,6 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
-# Generated Prisma client (engine) for runtime queries. DATABASE_URL (set in compose) points at the
-# Postgres pandc_web database. Migrations run separately (pandc-migrate).
-COPY --from=builder --chown=nextjs:nodejs /app/.generated ./.generated
 # Only GIT_COMMIT env — all secrets provided at runtime via docker-compose env_file
 COPY --from=builder /app/.env.local ./.env.local
 

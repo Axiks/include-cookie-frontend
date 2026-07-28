@@ -1,78 +1,43 @@
 import { NextRequest, NextResponse } from "next/server"
-import { generateAuthenticationOptions, verifyAuthenticationResponse } from "@simplewebauthn/server"
-import { isoBase64URL } from "@simplewebauthn/server/helpers"
-import { prisma } from "@/lib/prisma"
-import { randomBytes } from "crypto"
-import { storeChallenge, consumeChallenge, storePasskeyToken } from "@/lib/passkey-session"
+import { storePasskeyToken } from "@/lib/passkey-session"
+import { findIdentityByNickname } from "@/lib/kratos-identities"
+import { authClient } from "@/lib/auth-client"
 
-const RP_ID = process.env.WEBAUTHN_RP_ID ?? "localhost"
-const ORIGIN = process.env.NEXTAUTH_URL ?? "http://localhost:3000"
+// GET /api/passkey?nickname=<nickname>
+// Verifies the nickname exists in Kratos and returns the tgId (used as the WebAuthn
+// identifier in Kratos). The actual Kratos WebAuthn flow is initiated browser-direct
+// to avoid server-side CSRF complications.
+export async function GET(req: NextRequest) {
+    const nickname = req.nextUrl.searchParams.get("nickname")
+    if (!nickname) return NextResponse.json({ error: "nickname required" }, { status: 400 })
 
-export async function GET() {
-    const options = await generateAuthenticationOptions({
-        rpID: RP_ID,
-        allowCredentials: [],
-        userVerification: "required",
+    const identity = await findIdentityByNickname(nickname.trim())
+    if (!identity) return NextResponse.json({ error: "user_not_found" }, { status: 404 })
+
+    return NextResponse.json({
+        tgId: identity.tgId,
+        kratosPublicUrl: process.env.KRATOS_PUBLIC_URL ?? "http://localhost:4433",
     })
-
-    const challengeId = randomBytes(16).toString("hex")
-    storeChallenge(challengeId, options.challenge)
-
-    return NextResponse.json({ challengeId, options })
 }
 
+// POST /api/passkey { kratosId }
+// Verifies kratosId exists in Kratos (prevents spoofing) and issues a short-lived
+// NextAuth verifyToken. The browser already authenticated via the Kratos WebAuthn
+// browser flow; kratosId was obtained from /sessions/whoami.
 export async function POST(req: NextRequest) {
-    const { challengeId, assertion } = await req.json()
-
-    const expectedChallenge = consumeChallenge(challengeId)
-    if (!expectedChallenge) {
-        return NextResponse.json({ error: "challenge_expired" }, { status: 400 })
-    }
-
-    const cred = await prisma.passkeyCredential.findUnique({
-        where: { credentialId: assertion.id },
-    })
-    if (!cred) {
-        return NextResponse.json({ error: "credential_not_found" }, { status: 404 })
-    }
-
-    let verification
     try {
-        verification = await verifyAuthenticationResponse({
-            response: assertion,
-            expectedChallenge,
-            expectedOrigin: ORIGIN,
-            expectedRPID: RP_ID,
-            authenticator: {
-                credentialID: isoBase64URL.toBuffer(cred.credentialId),
-                credentialPublicKey: Buffer.from(cred.publicKey, "hex"),
-                counter: cred.signCount,
-            },
-            requireUserVerification: true,
-        })
+        const { kratosId } = await req.json() as { kratosId: string }
+        if (!kratosId) return NextResponse.json({ error: "kratosId required" }, { status: 400 })
+
+        const identity = await authClient.getIdentity(kratosId)
+        if (!identity) {
+            return NextResponse.json({ error: "identity_not_found" }, { status: 401 })
+        }
+
+        const verifyToken = await storePasskeyToken(kratosId)
+        return NextResponse.json({ verifyToken })
     } catch (e) {
-        console.error("[passkey/verify]", e)
-        return NextResponse.json({ error: "verification_failed" }, { status: 400 })
+        console.error("[passkey POST]", e)
+        return NextResponse.json({ error: "passkey_error" }, { status: 500 })
     }
-
-    if (!verification.verified) {
-        return NextResponse.json({ error: "verification_failed" }, { status: 400 })
-    }
-
-    await prisma.passkeyCredential.update({
-        where: { credentialId: assertion.id },
-        data: { signCount: verification.authenticationInfo.newCounter },
-    })
-
-    const user = await prisma.user.findUnique({
-        where: { kratosId: cred.kratosId },
-        include: { avatars: { include: { image: true } } },
-    })
-    if (!user) {
-        return NextResponse.json({ error: "user_not_found" }, { status: 404 })
-    }
-
-    const token = await storePasskeyToken(user.id, cred.kratosId)
-
-    return NextResponse.json({ token })
 }

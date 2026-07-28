@@ -11,7 +11,6 @@ export default defineConfig({
     environment: "node",
     globals: true,
     include: ["test/**/*.test.ts"],
-    // Prisma's native engine is happier with forked processes.
     pool: "forks",
   },
 })

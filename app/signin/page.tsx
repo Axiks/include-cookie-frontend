@@ -7,7 +7,6 @@ import React, { Suspense } from "react"
 import PasskeySignIn from "./_components/passkey-sign-in"
 import TelegramWidgetButton from "./_components/telegram-widget-button"
 import TelegramCallbackHandler from "./_components/telegram-callback-handler"
-import DevPasskeyRegister from "./_components/dev-passkey-register"
 import { getTranslations } from "next-intl/server"
 
 export default async function Login() {
@@ -45,15 +44,6 @@ export default async function Login() {
                 <Separator size="4" />
 
                 <PasskeySignIn />
-
-                {inDevEnvironment && (
-                    <>
-                        <Separator size="4" />
-                        <Suspense>
-                            <DevPasskeyRegister />
-                        </Suspense>
-                    </>
-                )}
             </Flex>
         </Container>
     )

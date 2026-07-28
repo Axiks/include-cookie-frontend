@@ -1,14 +1,12 @@
 import { describe, it, expect, beforeEach, vi } from "vitest"
 
-// Scoped listing wrappers: catalog-client + UserService mocked like in
+// Scoped listing wrappers: catalog-client + kratos-identities mocked like in
 // rest-project.service.test.ts; community-scope mocked to drive the three filter states.
 const catalogMock = vi.hoisted(() => ({ getJson: vi.fn() }))
 vi.mock("@/lib/catalog-client", () => ({ catalog: catalogMock }))
 
-const userMock = vi.hoisted(() => ({ getByKratosIdsLight: vi.fn().mockResolvedValue([]) }))
-vi.mock("@/features/user/UserService", () => ({
-  default: class { constructor() { return userMock as any } },
-}))
+const kratosMock = vi.hoisted(() => ({ getProfilesByKratosIds: vi.fn().mockResolvedValue(new Map()) }))
+vi.mock("@/lib/kratos-identities", () => kratosMock)
 
 const scopeMock = vi.hoisted(() => ({ getCommunityMemberSubs: vi.fn() }))
 vi.mock("@/lib/community-scope", () => ({
@@ -36,7 +34,7 @@ describe("community-projects — scoped listing wrappers", () => {
   beforeEach(() => {
     catalogMock.getJson.mockReset()
     scopeMock.getCommunityMemberSubs.mockReset()
-    userMock.getByKratosIdsLight.mockResolvedValue([])
+    kratosMock.getProfilesByKratosIds.mockResolvedValue(new Map())
   })
 
   it("scope off (null): every project passes through", async () => {

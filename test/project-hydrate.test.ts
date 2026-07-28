@@ -1,20 +1,18 @@
 import { describe, it, expect, beforeEach, vi } from "vitest"
 
-// project-hydrate news up a UserService to resolve contributor display by sub.
-const userMock = vi.hoisted(() => ({ getByKratosIdsLight: vi.fn() }))
-vi.mock("@/features/user/UserService", () => ({
-  default: class { constructor() { return userMock as any } },
-}))
+// project-hydrate resolves contributor display by sub via a batched Kratos lookup.
+const kratosMock = vi.hoisted(() => ({ getProfilesByKratosIds: vi.fn() }))
+vi.mock("@/lib/kratos-identities", () => kratosMock)
 
 import { hydrateProjects } from "@/lib/catalog/project-hydrate"
 
 describe("hydrateProjects — Catalog DTO → internal Project", () => {
-  beforeEach(() => userMock.getByKratosIdsLight.mockReset())
+  beforeEach(() => kratosMock.getProfilesByKratosIds.mockReset())
 
   it("maps the DTO and hydrates contributor nickname/avatar by sub", async () => {
-    userMock.getByKratosIdsLight.mockResolvedValue([
-      { kratosId: "sub-1", nickname: "Neko", avatars: [{ src: "/cdn/avatars/a.png" }] },
-    ])
+    kratosMock.getProfilesByKratosIds.mockResolvedValue(new Map([
+      ["sub-1", { kratosId: "sub-1", nickname: "Neko", avatarUrl: "/cdn/avatars/a.png" }],
+    ]))
     const dtos = [
       {
         id: "p1",
@@ -38,11 +36,11 @@ describe("hydrateProjects — Catalog DTO → internal Project", () => {
     expect(p.contributor[0].nickname).toBe("Neko")
     expect(p.contributor[0].avatar).toEqual({ src: "/cdn/avatars/a.png" })
     expect(p.links).toEqual([{ id: "l1", name: "site", url: "https://x" }])
-    expect(userMock.getByKratosIdsLight).toHaveBeenCalledWith(["sub-1"])
+    expect(kratosMock.getProfilesByKratosIds).toHaveBeenCalledWith(["sub-1"])
   })
 
   it("leaves display blank for a sub not present in the local cache", async () => {
-    userMock.getByKratosIdsLight.mockResolvedValue([])
+    kratosMock.getProfilesByKratosIds.mockResolvedValue(new Map())
     const dtos = [
       { id: "p1", title: "P", synopsis: null, covers: [], tags: [], contributors: [{ sub: "ghost" }], links: [] },
     ]
@@ -57,6 +55,6 @@ describe("hydrateProjects — Catalog DTO → internal Project", () => {
     ]
     const [p] = await hydrateProjects(dtos as any)
     expect(p.contributor).toEqual([])
-    expect(userMock.getByKratosIdsLight).not.toHaveBeenCalled()
+    expect(kratosMock.getProfilesByKratosIds).not.toHaveBeenCalled()
   })
 })

@@ -1,6 +1,6 @@
 import { Project, Contributor } from "@/lib/shared/project/project.service.interface"
 import { Link } from "@/lib/shared"
-import UserService from "@/features/user/UserService"
+import { getProfilesByKratosIds } from "@/lib/kratos-identities"
 import { mapTag, TagDto } from "./dto-map"
 
 // ---- Catalog REST project DTOs (the subset we consume) ----
@@ -23,10 +23,8 @@ export interface ProjectDto {
 // (nickname/avatar) from the local user cache by kratosId in one batched lookup, so the
 // existing pandc UI is unchanged. Shared by RestProjectService and getUserProjects.
 export async function hydrateProjects(dtos: ProjectDto[]): Promise<Project[]> {
-  const userService = new UserService()
   const subs = [...new Set(dtos.flatMap(d => d.contributors.map(c => c.sub)))].filter(Boolean)
-  const users = subs.length ? await userService.getByKratosIdsLight(subs) : []
-  const bySub = new Map(users.filter(u => u.kratosId).map(u => [u.kratosId!, u]))
+  const bySub = subs.length ? await getProfilesByKratosIds(subs) : new Map()
 
   return dtos.map(d => ({
     id: d.id,
@@ -40,7 +38,7 @@ export async function hydrateProjects(dtos: ProjectDto[]): Promise<Project[]> {
       const contr: Contributor = {
         userId: c.sub,
         nickname: u?.nickname ?? "",
-        avatar: u?.avatars?.[0],
+        avatar: u?.avatarUrl ? { src: u.avatarUrl } : undefined,
         roleTags: c.roleTags?.map(mapTag),
       }
       return contr

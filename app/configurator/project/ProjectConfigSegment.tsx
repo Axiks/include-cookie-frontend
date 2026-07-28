@@ -2,17 +2,16 @@
 
 import InputWrapper from "@/app/_components/ui/form-input-wrapper";
 import LinkInput, { LinkViewModel } from "@/app/_components/ui/Link/LinkInput";
-import { AspectRatio, Avatar, Badge, Box, Button, Card, Container, Flex, RadioCards, Switch, Text, TextArea, TextField } from "@radix-ui/themes";
+import { AspectRatio, Box, Button, Container, Flex, RadioCards, Switch, Text, TextArea, TextField } from "@radix-ui/themes";
 import { ChangeEvent, useActionState, useRef, useState } from "react";
-import { LinkBreak2Icon, Pencil1Icon, PlusIcon, TrashIcon, UploadIcon } from "@radix-ui/react-icons";
+import { PlusIcon, TrashIcon, UploadIcon } from "@radix-ui/react-icons";
 import { LinkNeko } from "@/app/_components/ui/link-neko";
 import InputBlock from "@/app/_components/ui/input-block";
 import { EMPTY_FORM_STATE, FormState } from "@/lib/utils/form-utils";
 import SaveFormBtnSection from "@/app/_components/ui/save-form-btn-section";
-import { ProjectMember, ProjectMemberDTO } from "@/app/configurator/project/_types/ProjectMember";
+import { ProjectMemberDTO } from "@/app/configurator/project/_types/ProjectMember";
 import Tag, { TagData, TagDto } from "@/lib/shared/tag-system/_types/Tag";
 import TagAutocompleteInput from "@/app/_components/ui/tag-autocomplite-input/tag-autocomplete-input";
-import { User } from "@/features/user/user.service.interface";
 import ProjectMembersSection from "@/app/_components/ui/user-autocomplite-input/user-autocomplite-input";
 import { saveProjectConfigForm } from "./action";
 import CoverSection from "../_components/cover-section";
@@ -148,81 +147,6 @@ function DevelopmentStatus({devStatusList, devStatus}:{devStatusList: Tag[], dev
         <RadioCards.Root name="developmentStatus" variant="surface" size="1" columns={{initial: "1", sm: "5"}} defaultValue={ devStatus?.uid } >
             { devStatusList.map(status => <RadioCards.Item key={status.uid} value={status.uid}>{status.getMainName()}</RadioCards.Item>) }
         </RadioCards.Root>
-    )
-}
-
-{/* function ProjectMembersSection({members, setMembers}: {members: Array<ProjectMember>, setMembers: Dispatch<SetStateAction<ProjectMember[]>>}){
-    return(
-        <Box maxWidth="32rem">
-            { members.map(member => 
-                <Box key={member.user.id} pb="2">
-                    <ProjectMemberCard  user={member.user} 
-                        roles={member.roles.map(role => role.name)} 
-                        isCanDelete={member.isCanDelete} 
-                        isCanEdit={member.isCanEdit} />
-                </Box>
-            )}
-
-            <Flex direction="row" justify="between" pt="3" gap="2">
-                 <Box width="100%">
-                    <TextField.Root placeholder="username" variant="soft">
-                        <TextField.Slot pr="3">
-                            <PersonIcon />
-                        </TextField.Slot>
-                    </TextField.Root>
-                 </Box>
-                <Button>Add member <PlusIcon /></Button>
-            </Flex>
-        </Box>
-    )
-} */}
-
-export function ProjectMemberCard({user, roles, isCanDelete, isCanEdit}: {user: User, roles: string[], isCanDelete: boolean, isCanEdit: boolean}) {
-    const t = useTranslations('configurator.project')
-    return(
-        <Card key={user.tgId} variant="surface">
-            <Flex direction="column" align="end">
-                {/* <UserAvatar src={user.image} username={user.nickname} size="2" /> */}
-                <Flex gap="2" direction="row" align="center" justify="between" width="100%">
-                    <Flex direction="row" gap="2" align="center">
-                        <Avatar
-                            size="2"
-                            src={user.avatars[0].src ?? ""}
-                            fallback={user.nickname?.substring(0,2) ?? ""}
-                        />
-                        <Box pl="1">
-                            <LinkNeko href={"/user/" + user.id}>
-                                <Text as="div" size="2" weight="bold">
-                                    { user.nickname }
-                                </Text>
-                            </LinkNeko>
-                        </Box>
-                    </Flex  >
-                    <Box pl="8">
-                        { roles.map( role => <Box key={role} pr="1"><Badge>{ role }</Badge></Box>) }
-                    </Box>
-                </Flex>
-
-                <Flex direction="row" gap="5" pt="3">
-                    <Box>
-                        <Button type="button" variant="ghost" disabled={!isCanEdit}
-                            onClick={async () => { }}>
-                                {t('edit')}
-                            <Pencil1Icon />
-                        </Button>
-                    </Box>
-                    <Box>
-                        <Button type="button" variant="ghost" disabled={!isCanDelete}
-                            onClick={async () => { }}>
-                                {t('unlink')}
-                            <LinkBreak2Icon />
-                        </Button> 
-                    </Box>
-                </Flex>
-                {/* <Box pl="5"><Badge>{ ProjectRole[Number(role)] }</Badge></Box>
-                { user.links?.map((link) => (<Box key={link.id}><Link size="1" href={ link.url } target="_blank">{ link.name }</Link></Box>) ) } */}
-            </Flex>
-        </Card>
     )
 }
 

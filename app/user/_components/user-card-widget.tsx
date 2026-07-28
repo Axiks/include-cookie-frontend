@@ -1,33 +1,28 @@
 import { Avatar, AvatarImage } from "@/app/_components/ui/avatar-image";
 import { LinkNeko } from "@/app/_components/ui/link-neko";
-import UserAvatar from "@/app/_components/ui/user-avatar";
-import { User } from "@/features/user/user.service.interface";
+import { WebUserSummary } from "@/lib/kratos-identities";
 import { Box, Card, Flex, Link, Text } from "@radix-ui/themes";
 
-export async function UserCardWidget({user}: {user: User}){
+export async function UserCardWidget({user}: {user: WebUserSummary}){
 
     return(
-        <Card key={user.tgId}>
+        <Card key={user.kratosId}>
             <Flex gap="3" align="start" wrap="wrap">
-                {/* <UserAvatar src={user.avatars.length != 0 ? user.avatars[0].src : null } username={user.nickname} size="3" /> */}
                 <Avatar>
-                    <AvatarImage src={user.avatars.length != 0 ? user.avatars[0].src : undefined } width={64} height={64} />
+                    <AvatarImage src={user.avatarUrl ?? undefined} width={64} height={64} />
                 </Avatar>
                 <Box>
-                    <LinkNeko href={"user/" + user.id}>
+                    <LinkNeko href={"user/" + user.kratosId}>
                         <Text as="div" size="2" weight="bold">
                             { user.nickname }
                         </Text>
                     </LinkNeko>
-                    
+
                     <Text as="div" size="2" color="gray" wrap="wrap">
                         { user.about }
                     </Text>
-                    {/* <Flex gap="2" pt="2" wrap="wrap">
-                        { user.stackVotes?.map((tehn) => (<Badge key={tehn.stackId} color="orange">{ getStackName(tehn.stackId) }</Badge>) ) }
-                    </Flex> */}
                     <Flex gap="2" pt="2" wrap="wrap">
-                        { user.links?.map((link) => (<Flex key={link.id} gap="1"><Link size="1" href={ link.url } target="_blank">{ link.name }</Link>  </Flex>) ) }
+                        { user.links?.map((link) => (<Flex key={link.url} gap="1"><Link size="1" href={ link.url } target="_blank">{ link.name }</Link>  </Flex>) ) }
                     </Flex>
                 </Box>
             </Flex>

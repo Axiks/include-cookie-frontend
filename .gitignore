@@ -39,13 +39,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# generated prisma client
-.generated/
-
-# SQLite test databases (runtime data, not source)
-prisma/db/
-prisma/prisma/
-
 # User-uploaded files (stored in RustFS/S3 — local dirs not needed)
 public/avatars/
 public/covers/

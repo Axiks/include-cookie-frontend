@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { hydraAdmin } from "@/lib/hydra"
-import { kratosAdmin } from "@/lib/kratos"
+import { authClient } from "@/lib/auth-client"
 import { isFirstPartyClient, traitsToClaims } from "@/lib/oauth/first-party"
 
 // Hydra redirects the browser here with ?consent_challenge=... (URLS_CONSENT).
@@ -38,7 +38,8 @@ export async function GET(req: NextRequest) {
         // `sub` is set by Hydra from the login subject — do not include it here.
         const idToken: Record<string, unknown> = {}
         try {
-            const { data: identity } = await kratosAdmin.getIdentity({ id: subject })
+            const identity = await authClient.getIdentity(subject)
+            if (!identity) throw new Error("identity not found")
             const claims = traitsToClaims(subject, identity)
             if (grantScope.includes("profile")) {
                 idToken.nickname = claims.nickname

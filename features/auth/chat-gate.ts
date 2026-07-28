@@ -1,3 +1,4 @@
+import { authClient } from '@/lib/auth-client'
 import type { IChatMembershipGate, ChatMembershipGateConfig } from './telegram-auth.interface'
 
 const ALLOWED_STATUSES = ['member', 'administrator', 'creator']
@@ -9,17 +10,8 @@ export class ChatMembershipGate implements IChatMembershipGate {
         if (!this.config.enabled || !this.config.chatId) return true
 
         try {
-            const res = await fetch(
-                'https://api.telegram.org/bot' + process.env.BOT_TOKEN + '/getChatMember',
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ chat_id: this.config.chatId, user_id: tgId }),
-                }
-            )
-            const data = await res.json()
-            if (!data.ok) return false
-            return ALLOWED_STATUSES.includes(data.result?.status)
+            const status = await authClient.getChatMember(this.config.chatId, String(tgId))
+            return !!status && ALLOWED_STATUSES.includes(status)
         } catch (e) {
             console.error('[ChatGate] Membership check failed for tgId:', tgId, e)
             return false
