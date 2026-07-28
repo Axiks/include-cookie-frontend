@@ -77,7 +77,7 @@ export async function GET(req: NextRequest) {
             photoUrl: params.photo_url,
         })
 
-        const token = storeTelegramToken(user.id, user.kratosId ?? '')
+        const token = await storeTelegramToken(user.id, user.kratosId ?? '')
         return NextResponse.redirect(signinRedirect(origin, { tg_token: token }, next))
     } catch (e) {
         console.error('[telegram/callback] Error:', e)

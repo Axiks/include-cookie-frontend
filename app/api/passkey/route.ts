@@ -72,8 +72,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "user_not_found" }, { status: 404 })
     }
 
-    const token = randomBytes(32).toString("hex")
-    storePasskeyToken(token, user.id, cred.kratosId)
+    const token = await storePasskeyToken(user.id, cred.kratosId)
 
     return NextResponse.json({ token })
 }

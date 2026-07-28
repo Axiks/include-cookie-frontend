@@ -102,8 +102,7 @@ export async function POST(req: NextRequest) {
         },
     })
 
-    const token = randomBytes(32).toString("hex")
-    storePasskeyToken(token, user.id, identity.id)
+    const token = await storePasskeyToken(user.id, identity.id)
 
     return NextResponse.json({ token })
 }

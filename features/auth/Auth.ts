@@ -7,7 +7,6 @@ import saveFileOnServer from "../cdn/FileService";
 import IUserService, { User, WriteUser } from "../user/user.service.interface";
 import UserService from "../user/UserService";
 import { Link } from "@/lib/shared";
-import { User as UserPrisma } from "@/.generated/prisma";
 import { findOrCreateKratosIdentity, reconcileLocalProfile } from "./kratos-bridge";
 import type { TelegramVerifiedIdentity } from "./telegram-auth.interface";
 
@@ -24,121 +23,10 @@ function syncAndReconcile(
 }
 // import { addUser, Link, updateAvatar, updateLinks, updateUser, User } from "../user/UserService";
 
-var jwt = require('jsonwebtoken');
 let _userService: IUserService | null = null
 function getUserService(): IUserService {
   if (!_userService) _userService = new UserService()
   return _userService
-}
-
-export async function decodeToken(token: string): Promise<TokenDataPayload | undefined> {
-  try {
-    return jwt.verify(
-      token, 
-      process.env.TOKEN_KEY, 
-      {
-          issuer: process.env.TOKEN_ISS, 
-          audience: process.env.TOKEN_AUD
-      });
-  } catch(err) {
-    return undefined;
-  }
-}
-
-export async function userRegisterMidlware(token: TokenDataPayload): Promise<User> {
-  var userFromDb: UserPrisma | null = await prisma.user.findUnique({
-    where: {
-      tgId: String(token.tg_id)
-    }
-  });
-
-  if(userFromDb === null) {
-    var nickname = token.nick
-    if(nickname == undefined && token.name != undefined && token.name != "" ) {
-      const cyrillicToTranslit = CyrillicToTranslit({
-        preset: "uk"
-      });
-      nickname = cyrillicToTranslit.transform(token.name, '_')
-    }
-    nickname = nickname ?? randomUUID().slice(0,8)
-
-    var links: Link[] = token.nick
-      ? [{ name: "t.me/" + token.nick, url: "https://t.me/" + token.nick }]
-      : []
-
-    var avatars: { src: string }[] = []
-    const avatarUrl = await tryGetDownloadUrl(token.avatar_src, token.iss)
-    if (avatarUrl) {
-      const filename = await loadAvatar(avatarUrl)
-      if (filename) avatars = [{ src: filename }]
-    }
-
-    const writeUser: WriteUser = {
-      tgId: String(token.tg_id),
-      nickname: nickname,
-      about: null,
-      links: links,
-      tags: [],
-      avatars: avatars
-    }
-    var newUser = await getUserService().add(writeUser)
-
-    syncAndReconcile(newUser.id, {
-      tgId: String(token.tg_id),
-      nickname: nickname,
-      avatarUrl: avatars[0]?.src ?? null,
-    })
-
-    return newUser
-  };
-
-  const user = await getUserService().getById(userFromDb.id)
-  if (!user) throw new Error("User not found in item service for id: " + userFromDb.id)
-
-  syncAndReconcile(user.id, {
-    tgId: String(token.tg_id),
-    nickname: user.nickname,
-    avatarUrl: user.avatars[0]?.src ?? null,
-  })
-
-  return user
-}
-
-async function tryGetDownloadUrl( token_avatar_src: string | undefined, token_iss: string ): Promise<string | undefined> {
-  if(!token_avatar_src) {
-    console.log("[Avatar] No avatar_src in token — skipping download")
-    return undefined
-  }
-
-  if(token_iss == process.env.TOKEN_ISS){
-    const botToken = process.env.BOT_TOKEN
-    if (!botToken) {
-      console.warn("[Avatar] BOT_TOKEN env var is not set — cannot build TG file URL")
-      return undefined
-    }
-
-    const getMeUrl = `https://api.telegram.org/bot${botToken}/getMe`
-    try {
-      const getMeRes = await fetch(getMeUrl)
-      const getMeJson = await getMeRes.json()
-      if (getMeJson.ok) {
-        console.log(`[Avatar] Bot token valid. Bot: @${getMeJson.result.username}`)
-      } else {
-        console.warn("[Avatar] Bot token invalid:", getMeJson.description)
-        return undefined
-      }
-    } catch (e) {
-      console.warn("[Avatar] Failed to reach Telegram API:", e)
-      return undefined
-    }
-
-    const url = `https://api.telegram.org/file/bot${botToken}/${token_avatar_src}`
-    console.log("[Avatar] TG file URL:", url)
-    return url
-  }
-
-  console.log("[Avatar] External avatar URL:", token_avatar_src)
-  return token_avatar_src
 }
 
 async function loadAvatar(avatar_href: string): Promise<string | null> {
@@ -151,19 +39,6 @@ async function loadAvatar(avatar_href: string): Promise<string | null> {
     console.warn("[Avatar] Failed to download avatar:", e)
     return null
   }
-}
-
-export interface TokenDataPayload {
-    iss: string,
-    aud: string,
-    sub: string,
-    nick?: string,
-    name?: string,
-    tg_id: string,
-    avatar_src?: string,
-    role: string[],
-    iat: number,
-    exp: number
 }
 
 export async function userRegisterViaWidget(identity: TelegramVerifiedIdentity): Promise<User> {

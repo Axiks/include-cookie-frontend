@@ -1,5 +1,4 @@
 import NextAuth, { User } from "next-auth"
-import { PrismaAdapter } from "@auth/prisma-adapter"
 import { prisma } from "@/lib/prisma"
 import Credentials from "next-auth/providers/credentials"
 import type { Provider } from "next-auth/providers"
@@ -58,7 +57,7 @@ const providers: Provider[] = [
         const verifyToken = credentials.verifyToken as string
         if (!verifyToken) return null
 
-        const data = consumeTelegramToken(verifyToken)
+        const data = await consumeTelegramToken(verifyToken)
         if (!data) return null
 
         const dbUser = await prisma.user.findUnique({
@@ -85,7 +84,7 @@ const providers: Provider[] = [
         const verifyToken = credentials.verifyToken as string
         if (!verifyToken) return null
 
-        const data = consumePasskeyToken(verifyToken)
+        const data = await consumePasskeyToken(verifyToken)
         if (!data) return null
 
         const dbUser = await prisma.user.findUnique({
@@ -117,7 +116,6 @@ export const providerMap = providers
 
 export const { handlers, signIn, signOut, auth, unstable_update } = NextAuth({
   ...authConfig,
-  adapter: PrismaAdapter(prisma),
   providers: providers,
   trustHost: true,
   secret: process.env.AUTH_SECRET,

@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
             photoUrl: tgUser.photoUrl as string | undefined,
         })
 
-        const token = storeTelegramToken(user.id, user.kratosId ?? '')
+        const token = await storeTelegramToken(user.id, user.kratosId ?? '')
         return NextResponse.json({ token })
     } catch (e) {
         console.error('[telegram/miniapp] Error:', e)
