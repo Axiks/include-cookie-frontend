@@ -76,6 +76,24 @@ export interface KratosPasskey {
   added_at: string
 }
 
+export interface HydraLoginRequest {
+  skip: boolean
+  subject: string
+  client?: { client_id?: string }
+  requested_scope?: string[]
+}
+
+export interface HydraConsentRequest {
+  subject?: string
+  client?: { client_id?: string }
+  requested_scope?: string[]
+  requested_access_token_audience?: string[]
+}
+
+export interface HydraRedirect {
+  redirect_to: string
+}
+
 export const authClient = {
   telegramWidgetLogin(params: Record<string, string>): Promise<{ kratosId: string; isNew: boolean }> {
     return request("POST", "/telegram/widget-login", { params })
@@ -122,5 +140,36 @@ export const authClient = {
   },
   passkeyRegistrationRemove(kratosId: string, credentialId: string) {
     return requestRaw("POST", "/passkey/registration-remove", { kratosId, credentialId })
+  },
+  hydraGetLoginRequest(challenge: string): Promise<HydraLoginRequest> {
+    return request("GET", `/hydra/login/${encodeURIComponent(challenge)}`)
+  },
+  hydraAcceptLoginRequest(challenge: string, body: {
+    subject: string
+    remember?: boolean
+    remember_for?: number
+  }): Promise<HydraRedirect> {
+    return request("POST", `/hydra/login/${encodeURIComponent(challenge)}/accept`, body)
+  },
+  hydraGetConsentRequest(challenge: string): Promise<HydraConsentRequest> {
+    return request("GET", `/hydra/consent/${encodeURIComponent(challenge)}`)
+  },
+  hydraAcceptConsentRequest(challenge: string, body: {
+    grant_scope?: string[]
+    grant_access_token_audience?: string[]
+    remember?: boolean
+    remember_for?: number
+    session?: { id_token?: Record<string, unknown> }
+  }): Promise<HydraRedirect> {
+    return request("POST", `/hydra/consent/${encodeURIComponent(challenge)}/accept`, body)
+  },
+  hydraRejectConsentRequest(challenge: string, body: {
+    error?: string
+    error_description?: string
+  }): Promise<HydraRedirect> {
+    return request("POST", `/hydra/consent/${encodeURIComponent(challenge)}/reject`, body)
+  },
+  hydraAcceptLogoutRequest(challenge: string): Promise<HydraRedirect> {
+    return request("POST", `/hydra/logout/${encodeURIComponent(challenge)}/accept`)
   },
 }

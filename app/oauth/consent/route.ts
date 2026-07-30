@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server"
-import { hydraAdmin } from "@/lib/hydra"
 import { authClient } from "@/lib/auth-client"
 import { isFirstPartyClient, traitsToClaims } from "@/lib/oauth/first-party"
 
@@ -11,22 +10,17 @@ export async function GET(req: NextRequest) {
     }
 
     try {
-        const { data: consentRequest } = await hydraAdmin.getOAuth2ConsentRequest({
-            consentChallenge: challenge,
-        })
+        const consentRequest = await authClient.hydraGetConsentRequest(challenge)
 
         const clientId = consentRequest.client?.client_id
 
         // Only auto-grant for our own (first-party) services. Unknown clients are
         // rejected by default to avoid silently leaking telegram_id / about.
         if (!isFirstPartyClient(clientId)) {
-            const { data: reject } = await hydraAdmin.rejectOAuth2ConsentRequest({
-                consentChallenge: challenge,
-                rejectOAuth2Request: {
-                    error: "consent_required",
-                    error_description:
-                        "Interactive consent for third-party clients is not enabled yet.",
-                },
+            const reject = await authClient.hydraRejectConsentRequest(challenge, {
+                error: "consent_required",
+                error_description:
+                    "Interactive consent for third-party clients is not enabled yet.",
             })
             return NextResponse.redirect(reject.redirect_to)
         }
@@ -56,15 +50,12 @@ export async function GET(req: NextRequest) {
             console.error("[oauth/consent] failed to read Kratos identity:", e)
         }
 
-        const { data: accept } = await hydraAdmin.acceptOAuth2ConsentRequest({
-            consentChallenge: challenge,
-            acceptOAuth2ConsentRequest: {
-                grant_scope: grantScope,
-                grant_access_token_audience: consentRequest.requested_access_token_audience,
-                remember: true,
-                remember_for: 30 * 24 * 60 * 60,
-                session: { id_token: idToken },
-            },
+        const accept = await authClient.hydraAcceptConsentRequest(challenge, {
+            grant_scope: grantScope,
+            grant_access_token_audience: consentRequest.requested_access_token_audience,
+            remember: true,
+            remember_for: 30 * 24 * 60 * 60,
+            session: { id_token: idToken },
         })
         return NextResponse.redirect(accept.redirect_to)
     } catch (e) {

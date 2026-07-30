@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { hydraAdmin } from "@/lib/hydra"
+import { authClient } from "@/lib/auth-client"
 import { getPublicOrigin } from "@/lib/public-origin"
 
 // Hydra redirects the browser here with ?logout_challenge=... (URLS_LOGOUT).
@@ -11,9 +11,7 @@ export async function GET(req: NextRequest) {
     }
 
     try {
-        const { data: accept } = await hydraAdmin.acceptOAuth2LogoutRequest({
-            logoutChallenge: challenge,
-        })
+        const accept = await authClient.hydraAcceptLogoutRequest(challenge)
         return NextResponse.redirect(accept.redirect_to)
     } catch (e) {
         console.error("[oauth/logout] error:", e)

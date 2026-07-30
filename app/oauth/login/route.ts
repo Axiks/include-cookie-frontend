@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
-import { hydraAdmin } from "@/lib/hydra"
+import { authClient } from "@/lib/auth-client"
 import { getPublicOrigin } from "@/lib/public-origin"
 
 // Hydra redirects the browser here with ?login_challenge=... (URLS_LOGIN).
@@ -11,16 +11,11 @@ export async function GET(req: NextRequest) {
     }
 
     try {
-        const { data: loginRequest } = await hydraAdmin.getOAuth2LoginRequest({
-            loginChallenge: challenge,
-        })
+        const loginRequest = await authClient.hydraGetLoginRequest(challenge)
 
         // Hydra already has an SSO session for this subject — accept immediately.
         if (loginRequest.skip) {
-            const { data: accept } = await hydraAdmin.acceptOAuth2LoginRequest({
-                loginChallenge: challenge,
-                acceptOAuth2LoginRequest: { subject: loginRequest.subject },
-            })
+            const accept = await authClient.hydraAcceptLoginRequest(challenge, { subject: loginRequest.subject })
             return NextResponse.redirect(accept.redirect_to)
         }
 
@@ -31,13 +26,10 @@ export async function GET(req: NextRequest) {
         if (session?.user?.id) {
             const subject = session.user.kratosId
             if (subject) {
-                const { data: accept } = await hydraAdmin.acceptOAuth2LoginRequest({
-                    loginChallenge: challenge,
-                    acceptOAuth2LoginRequest: {
-                        subject,
-                        remember: true,
-                        remember_for: 30 * 24 * 60 * 60, // 30 days, matches NextAuth maxAge
-                    },
+                const accept = await authClient.hydraAcceptLoginRequest(challenge, {
+                    subject,
+                    remember: true,
+                    remember_for: 30 * 24 * 60 * 60, // 30 days, matches NextAuth maxAge
                 })
                 return NextResponse.redirect(accept.redirect_to)
             }
