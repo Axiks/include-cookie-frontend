@@ -1,4 +1,4 @@
-// Thin HTTP client for the pandc-auth service — centralizes the Kratos-admin/Telegram-Bot-API/
+// Thin HTTP client for the lumi-auth service — centralizes the Kratos-admin/Telegram-Bot-API/
 // WebAuthn-bridging backend logic that used to live directly in this app. Mirrors
 // lib/catalog-client.ts's shape (internal shared-secret auth, no cookies).
 const BASE = process.env.AUTH_SERVICE_URL?.replace(/\/$/, "")

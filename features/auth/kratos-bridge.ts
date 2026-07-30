@@ -2,7 +2,7 @@ import { authClient, type KratosIdentity, type KratosProfileLink } from "@/lib/a
 
 export type { KratosIdentity, KratosProfileLink }
 
-// Reads the full profile (nickname/about/links/avatar/cover) — the pandc-auth service is
+// Reads the full profile (nickname/about/links/avatar/cover) — the lumi-auth service is
 // the sole owner of Kratos admin-API access now.
 export async function fetchKratosIdentity(kratosId: string): Promise<KratosIdentity | null> {
     return authClient.getIdentity(kratosId)
