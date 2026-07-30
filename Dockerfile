@@ -1,6 +1,6 @@
 # syntax=docker.io/docker/dockerfile:1
 # Standalone build — context = repo ROOT.
-#   docker build -t pandc-web .
+#   docker build -t include-cookie-frontend .
 #
 # No database of its own — all profile/identity state lives in Ory Kratos (shared instance).
 
