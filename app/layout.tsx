@@ -6,11 +6,8 @@ import '@radix-ui/themes/styles.css';
 import './styles.css';
 import Header from "./_components/layout/Header/header";
 import Footer from "./_components/layout/Footer/footer";
-import TelegramMiniAppAuth from "./signin/_components/telegram-mini-app-auth";
-import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "next-themes";
 import { inDevEnvironment } from "@/lib/shared/utils/helpers";
-import { dynamicFeaturesEnabled } from "@/lib/features";
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
 
@@ -32,7 +29,6 @@ export default async function RootLayout({
 }>) {
   const locale = await getLocale();
   const messages = await getMessages();
-  const dynamicFeatures = dynamicFeaturesEnabled();
 
   const shell = (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
@@ -60,16 +56,7 @@ export default async function RootLayout({
       </head>
       <body>
         <NextIntlClientProvider locale={locale} messages={messages}>
-          {/* Auth is part of the temporarily-disabled dynamic features — skip the
-              session provider (and Telegram auto sign-in) entirely when it's off. */}
-          {dynamicFeatures ? (
-            <SessionProvider>
-              <TelegramMiniAppAuth />
-              {shell}
-            </SessionProvider>
-          ) : (
-            shell
-          )}
+          {shell}
         </NextIntlClientProvider>
       </body>
     </html>

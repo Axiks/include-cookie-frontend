@@ -2,17 +2,15 @@ import { Box, Flex, Text, Badge } from "@radix-ui/themes";
 import { NavLink } from "../../ui/nav-link";
 import { countScopedProjects } from "@/lib/catalog/community-projects";
 import BrandLogo from "./_components/brand-logo";
-import { HeaderAuthSection } from "./_components/header-auth-section";
 import { LanguageSwitcher } from "./_components/language-switcher";
 import { ThemeToggle } from "./_components/theme-toggle";
 import { getTranslations } from "next-intl/server";
-import { dynamicFeaturesEnabled, projectsCatalogEnabled } from "@/lib/features";
+import { projectsCatalogEnabled } from "@/lib/features";
 
 export default async function Header() {
   const t = await getTranslations('nav')
-  const dynamicFeatures = dynamicFeaturesEnabled()
 
-  // The projects catalog nav link is independent of the dynamicFeatures kill-switch
+  // The projects catalog nav link is independent of the (now-removed) login-gated features
   // (it ships in production) but still needs the Catalog service to actually be up —
   // the header renders on every page, so don't 500 the whole site or show a dead link
   // when it isn't (e.g. local UI dev without the catalog running).
@@ -49,12 +47,6 @@ export default async function Header() {
               <Badge>{projectCount}</Badge>
             </NavLink>
           )}
-          {dynamicFeatures && (
-            <>
-              <NavLink href="/user" name={t('members')} />
-              <NavLink href="/statistic" name={t('statistics')} />
-            </>
-          )}
           <NavLink href="/about" name={t('about')} />
           {/* Rules live on the About page — deep link, so it shares About's pathname
               and opts out of the active underline. */}
@@ -63,9 +55,7 @@ export default async function Header() {
 
         <Flex className="header-controls" align="center" gap="5">
           <ThemeToggle />
-          {/* Auth (sign-in / user menu) is disabled with the dynamic features; keep the
-              language switcher available so the static site stays multilingual. */}
-          {dynamicFeatures ? <HeaderAuthSection /> : <LanguageSwitcher />}
+          <LanguageSwitcher />
         </Flex>
       </Flex>
     </Box>

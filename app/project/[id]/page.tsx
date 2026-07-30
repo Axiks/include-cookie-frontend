@@ -1,8 +1,6 @@
 import Cover from '@/app/_components/ui/cover'
-import { LinkNeko } from '@/app/_components/ui/link-neko'
 import { getCatalog } from '@/lib/catalog'
-import { Pencil1Icon } from '@radix-ui/react-icons'
-import { Box, Button, Callout, Card, Container, Flex, Grid, Link, Text, TextProps } from '@radix-ui/themes'
+import { Box, Flex, Text } from '@radix-ui/themes'
 import { Group, IGroupService } from '@/lib/shared/tag-system/group/service/group.service.interface'
 import Tag from '@/lib/shared/tag-system/_types/Tag'
 import ITagService from '@/lib/shared/tag-system/tag/service/tag.service.interface'
@@ -10,12 +8,10 @@ import { IProjectService } from '@/lib/shared/project/project.service.interface'
 import { notFound } from 'next/navigation'
 import { tagExtended } from '@/lib/shared/tag-system/_types/tag.extended'
 import DevEthapWidget, { DevEthapWidgetNew } from '../_components/dev-ethap-widget'
-import { auth } from '@/auth'
 import LinksWidjet from '../_components/links-widget'
 import ContributorsWidget from '../_components/contributor-list-widget'
 import TagsWidget from '../_components/tag-list-widget'
 import OpenForColabWidget from '../_components/open-for-colab-widget'
-import { getUserTags } from '@/lib/catalog/user-tags'
 import Markdown from 'react-markdown'
 
 
@@ -25,8 +21,6 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const projectService: IProjectService = getCatalog().projects()
   const groupService: IGroupService = getCatalog().groups()
   const tagService: ITagService = getCatalog().tags()
-
-  const session = await auth()
 
   // Don't 500 a project page if the Catalog is unreachable — treat it the same as a
   // missing project (this route is now reachable in production ahead of sign-in/edit).
@@ -54,19 +48,6 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   }
 
   // helpers
-  async function isCurrentUserIsOwner(): Promise<Boolean> {
-    const session = await auth()
-    if (!session?.user) return false
-
-    for(var contr of project?.contributor ?? []) {
-      if(contr.userId == session.user?.kratosId) return true
-    }
-
-    return false
-  }
-
-  const currentUserIsPorjectOwner = await isCurrentUserIsOwner()
-
   async function getGroupTags(group: Group): Promise<Tag[]> {
     var devStagesTags: Tag[] = []
     const devStages = group.items
@@ -90,18 +71,6 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     return false
   }
 
-  function ShareTags(projectTags: Tag[], userTags: Tag[]): Tag[] {
-    var tags: Tag[] = []
-    for(const projectTag of projectTags) {
-      let findTag = userTags.find(x => x.uid == projectTag.uid)
-      if(findTag) tags.push(findTag)
-    }
-
-    return tags
-  }
-
-  const currentUserTags = await getUserTags(session?.user?.kratosId)
-  const sharedTags = ShareTags(projectTags, currentUserTags)
   const isProjectOpenForColab = IsTagAvaible(projectTags, openForColabTag!)
 
   return (
@@ -113,7 +82,6 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
           <Text size="7">{project?.title}</Text>
           <DevEthapWidgetNew ethapList={ devStagesTags.length != 0 ? devStagesTags : [] } currentEthap={devSrageTag} />
         </Flex>
-        { currentUserIsPorjectOwner ? <ProjectEditBtn projectId={project.id} /> : null }
       </Flex>
 
       <Flex direction="column" gap="3" maxWidth="800px">
@@ -124,9 +92,9 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         </Box>
         <LinksWidjet links={project.links} />
 
-          { isProjectOpenForColab && !currentUserIsPorjectOwner 
+          { isProjectOpenForColab
           ? <Box py="3">
-              <OpenForColabWidget matchedSkils={ sharedTags.map(x => x.name[0].body) } />    
+              <OpenForColabWidget matchedSkils={[]} />
             </Box>
           : null }
 
@@ -135,16 +103,5 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         
       </Flex>
     </Flex>
-  )
-}
-
-
-function ProjectEditBtn({projectId}: {projectId: string}) {
-  return(
-    <>
-      <LinkNeko href={"/configurator/project/" + projectId}>
-        <Button type="button"><Pencil1Icon />Edit</Button>
-      </LinkNeko> 
-    </>
   )
 }

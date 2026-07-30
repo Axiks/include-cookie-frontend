@@ -1,9 +1,5 @@
 import { describe, it, expect, beforeAll, beforeEach, vi } from "vitest"
 
-// auth() supplies the acting user's sub for write headers.
-const authMock = vi.hoisted(() => ({ auth: vi.fn() }))
-vi.mock("@/auth", () => ({ auth: authMock.auth }))
-
 let catalog: typeof import("@/lib/catalog-client").catalog
 
 beforeAll(async () => {
@@ -14,7 +10,6 @@ beforeAll(async () => {
 })
 
 beforeEach(() => {
-  authMock.auth.mockReset()
   global.fetch = vi.fn() as any
 })
 
@@ -33,13 +28,12 @@ describe("catalog-client", () => {
     expect(opts.headers["X-On-Behalf-Of"]).toBeUndefined()
   })
 
-  it("postJson attaches X-On-Behalf-Of from the session sub and serializes the body", async () => {
-    authMock.auth.mockResolvedValue({ user: { kratosId: "sub-9" } })
+  it("postJson serializes the body and never attaches X-On-Behalf-Of (login removed from this app)", async () => {
     ;(global.fetch as any).mockResolvedValue(okJson({ id: "new" }))
     await catalog.postJson("/projects", { title: "x" })
     const [, opts] = calls()[0]
     expect(opts.method).toBe("POST")
-    expect(opts.headers["X-On-Behalf-Of"]).toBe("sub-9")
+    expect(opts.headers["X-On-Behalf-Of"]).toBeUndefined()
     expect(JSON.parse(opts.body)).toEqual({ title: "x" })
   })
 
@@ -54,7 +48,6 @@ describe("catalog-client", () => {
   })
 
   it("del() issues a DELETE", async () => {
-    authMock.auth.mockResolvedValue({ user: { kratosId: "sub-1" } })
     ;(global.fetch as any).mockResolvedValue({ ok: true, status: 204, text: async () => "" })
     await catalog.del("/projects/p1")
     expect(calls()[0][1].method).toBe("DELETE")

@@ -6,12 +6,10 @@ import { LinkNeko } from "./_components/ui/link-neko";
 import { ProjectsShowcaseWidjet } from "./_components/ui/project-showcase";
 import { DynamicIcon, IconName } from "lucide-react/dynamic";
 import { getTranslations } from "next-intl/server";
-import { dynamicFeaturesEnabled, projectsCatalogEnabled } from "@/lib/features";
+import { projectsCatalogEnabled } from "@/lib/features";
 
 export default async function Root() {
-  const dynamicFeatures = dynamicFeaturesEnabled()
-
-  // The projects block ships in production independent of dynamicFeatures — but only
+  // The projects block ships in production independent of login — but only
   // when the Catalog service actually answers. Don't 500 the homepage if it's
   // unreachable; render without the block instead (catalogAvailable stays false).
   let lastProjects: Project[] = []
@@ -48,7 +46,6 @@ export default async function Root() {
               <ProjectsRecommendations
                 projects={lastProjects}
                 canSeeProjectsCount={canSeeProjectsCount}
-                showAddLink={dynamicFeatures}
               />
             </>
           )}
@@ -118,8 +115,8 @@ async function AboutSection() {
 }
 
 async function ProjectsRecommendations(
-  { projects, canSeeProjectsCount, showAddLink }:
-  { projects: Project[], canSeeProjectsCount: number, showAddLink: boolean },
+  { projects, canSeeProjectsCount }:
+  { projects: Project[], canSeeProjectsCount: number },
 ) {
   const t = await getTranslations('home')
 
@@ -127,10 +124,6 @@ async function ProjectsRecommendations(
     <Flex gap="3" direction="column" pt="2" wrap="wrap">
       <Flex direction="row" justify="between" align="center" wrap="wrap" gap="1">
         <Heading as="h3" size="4">{t('projects.sectionTitle')}</Heading>
-        {/* Adding a project needs the Configurator, still behind dynamicFeatures. */}
-        {showAddLink && (
-          <LinkNeko href="/configurator/project/create">{t('projects.addProject')}</LinkNeko>
-        )}
       </Flex>
       <ProjectsShowcaseWidjet projects={projects} />
       <Flex direction="row" gap="2" justify="between" align="center">
