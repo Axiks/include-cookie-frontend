@@ -20,7 +20,8 @@ export default async function Header() {
   if (projectsCatalogEnabled()) {
     try {
       projectCount = await countScopedProjects()
-    } catch {
+    } catch (e) {
+      console.warn("[header] catalog unavailable, hiding projects link:", (e as Error).message)
       projectCount = null
     }
   }
