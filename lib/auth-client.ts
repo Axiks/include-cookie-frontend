@@ -172,4 +172,7 @@ export const authClient = {
   hydraAcceptLogoutRequest(challenge: string): Promise<HydraRedirect> {
     return request("POST", `/hydra/logout/${encodeURIComponent(challenge)}/accept`)
   },
+  uploadAvatar(id: string, data: string, ext: string): Promise<{ filename: string }> {
+    return request("POST", `/identities/${encodeURIComponent(id)}/avatar`, { data, ext })
+  },
 }

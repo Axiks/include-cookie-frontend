@@ -2,6 +2,7 @@
 
 import { auth, unstable_update } from "@/auth";
 import { updateKratosTraits } from "@/features/auth/kratos-bridge";
+import { authClient } from "@/lib/auth-client";
 import { Link } from "@/lib/shared";
 import { FormState, fromErrorToFormState } from "@/lib/utils/form-utils";
 import z from "zod";
@@ -47,19 +48,22 @@ export const saveConfigurationForm = async (
       stacks: []
     })
 
-    // Save uploaded image files first so we have filenames to store.
+    // Avatar upload (and its avatar_url trait) go through lumi-auth — it owns the S3 write
+    // and the old-file cleanup, same as the Telegram-login-time avatar download does.
     const avatarData = formData.get("avatar") ? formData.get("avatar") : null
-    const avatar: Image | null = await saveImage(avatarData, "avatars")
+    const avatar: Image | null = await uploadAvatarImage(avatarData, kratosId)
 
+    // Cover stays a local upload — it's catalog-only/app-local data, never part of the
+    // shared Kratos identity (see docs/sso-setup.md's data-ownership table).
     const coverData = formData.get("cover") ? formData.get("cover") : null
     const cover: Image | null = await saveImage(coverData, "covers")
 
-    // Kratos is the sole store for the whole profile (nickname/about/links/avatar/cover).
+    // Kratos is the sole store for nickname/about/links/cover; avatar_url was already
+    // set by uploadAvatarImage above.
     await updateKratosTraits(kratosId, {
       nickname,
       about,
       links,
-      ...(avatar ? { avatarUrl: avatar.src } : {}),
       ...(cover ? { coverUrl: cover.src } : {}),
     })
 
@@ -91,6 +95,17 @@ export interface UserFormDTO {
     avatar?: Image | undefined,
     cover?: Image | undefined,
     tags?: TagData[] | undefined
+}
+
+async function uploadAvatarImage(image: any, kratosId: string): Promise<Image | null> {
+  if (!(image instanceof File) || image.size === 0) return null
+
+  const buffer = Buffer.from(await image.arrayBuffer())
+  const parts = image.name.split(".")
+  const ext = parts.length > 1 ? (parts.pop()?.toLowerCase() ?? "png") : "png"
+
+  const { filename } = await authClient.uploadAvatar(kratosId, buffer.toString("base64"), ext)
+  return { src: filename }
 }
 
 async function saveImage(image: any, catalogName: string): Promise<Image | null> {
