@@ -25,3 +25,7 @@ public/covers/
 # Deployment artifacts
 /deploy/
 .deploy/
+
+# Compose files + deploy env templates — consumed by `docker compose` on the server,
+# never needed inside the image (which is built FROM this context).
+infra/

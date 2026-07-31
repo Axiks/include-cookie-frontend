@@ -40,3 +40,63 @@ jobs:
             GIT_COMMIT=${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  # This repo deploys itself now — the lumispace stack no longer starts this app (it owns
+  # only its own services). Own Compose project, own Cloudflare tunnel; the only thing
+  # shared is that stack's Docker network, so catalog/auth/rustfs resolve by service name.
+  deploy:
+    name: Deploy to server
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Copy compose files to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "infra/docker-compose.yml,infra/docker-compose.prod.yml"
+          strip_components: 1
+          target: $HOME/dockers/include-cookie/
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        env:
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: GHCR_TOKEN,GHCR_USER
+          script: |
+            # Fail on the FIRST error — without this the script runs on past a failed
+            # pull/up and exits with the status of the last command, reporting a broken
+            # deploy as green. Cleanup at the end is explicitly exempt.
+            set -euo pipefail
+            # GHCR pulls flake (TLS handshake timeouts). Retry rather than failing the
+            # deploy on a network blip.
+            retry() {
+              attempt=1
+              while true; do
+                if "$@"; then return 0; fi
+                if [ "$attempt" -ge 3 ]; then return 1; fi
+                echo "pull failed, retry $attempt/3 in 10s…"
+                attempt=$((attempt + 1))
+                sleep 10
+              done
+            }
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+            cd "$HOME/dockers/include-cookie"
+            # .env.prod is NOT deployed by CI — it holds secrets and lives on the server
+            # only (see infra/.env.prod.example). Fail with a clear message if it's absent
+            # rather than letting compose substitute empty strings everywhere.
+            test -f .env.prod || { echo "ERROR: .env.prod missing on server — create it from infra/.env.prod.example"; exit 1; }
+            COMPOSE="docker compose -p include-cookie --env-file .env.prod -f docker-compose.yml -f docker-compose.prod.yml"
+            retry $COMPOSE pull
+            $COMPOSE up -d --remove-orphans
+            # Housekeeping only — must never turn a good deploy red.
+            docker logout ghcr.io || true
+            docker image prune -f || true

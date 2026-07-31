@@ -1,0 +1,52 @@
+# Dev overlay — the remote dev stack, deployed alongside lumispace's own dev stack.
+#
+#   docker compose -p include-cookie-dev --env-file infra/.env.dev \
+#     -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up -d
+#
+# Differences from prod: `:dev` image tag, `-dev` container-name suffix, .env.dev, and it
+# attaches to the lumispace DEV stack's network (project `pandc-dev` ⇒ `pandc-dev_default`)
+# so it reaches that stack's catalog/auth/rustfs rather than prod's.
+#
+# Separate Compose project name (`-p include-cookie-dev`) keeps it fully isolated from the
+# prod deploy on the same host: own network, own containers.
+#
+# NOTE: for plain LOCAL development you don't need Compose at all — `npm run dev` with a
+# root .env.local (see .env.example) talks to services on localhost directly. These files
+# are for deployed stacks.
+services:
+  frontend:
+    image: "ghcr.io/axiks/include-cookie-frontend:dev"
+    container_name: include-cookie-frontend-dev
+    env_file:
+      - path: ./.env.dev
+    environment:
+      NODE_ENV: production
+      CATALOG_API_URL: http://catalog:3000
+      AUTH_SERVICE_URL: http://auth:8082
+      BOT_API_URL: http://bot:8081
+      S3_ENDPOINT: http://rustfs:9000
+      S3_ACCESS_KEY: ${RUSTFS_ACCESS_KEY:-rustfsadmin}
+      S3_SECRET_KEY: ${RUSTFS_SECRET_KEY:-rustfsadmin}
+      S3_BUCKET: ${S3_BUCKET:-pandc}
+    networks:
+      - default
+      - lumispace
+
+  tunnel:
+    image: cloudflare/cloudflared
+    container_name: include-cookie-tunnel-dev
+    restart: unless-stopped
+    command: tunnel run
+    env_file:
+      - path: ./.env.dev
+    depends_on:
+      frontend:
+        condition: service_started
+
+networks:
+  default:
+
+  # lumispace's DEV network — its compose runs with `-p pandc-dev`.
+  lumispace:
+    external: true
+    name: ${LUMISPACE_NETWORK:-pandc-dev_default}

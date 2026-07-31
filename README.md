@@ -86,8 +86,9 @@ npm run dev
 Opens on **http://localhost:3000** (Turbopack, hot reload).
 
 If you're working on this alongside the rest of LumiSpace, the sibling repos' own READMEs
-cover running Catalog/Bot/lumi-auth/Kratos/RustFS locally (they're normally brought up
-together via the platform's `docker compose` setup, not from this repo).
+cover running Catalog/Bot/lumi-auth/Kratos/RustFS locally. You don't need any of them to
+start this app — every upstream is independently optional (see the table above), so
+`npm run dev` with no `.env.local` at all serves the static pages fine.
 
 ## Environment variables
 
@@ -126,6 +127,51 @@ server + static assets, no `node_modules`/source. All configuration is supplied 
 container **runtime** via env vars (`--env-file`/`-e`/compose `environment:`), never baked
 into the image — same image works for dev and prod.
 
+## Deploy
+
+**This repo deploys itself.** It used to be started by the lumispace repo's compose stack;
+it no longer is — that stack owns only its own services. This app now has its own Compose
+project, its own Cloudflare tunnel, and its own release cadence.
+
+It still owns **no** backing services, because it owns no data: it's a read-only frontend
+over other services' REST APIs. So `infra/` deliberately defines nothing but this app and
+its tunnel.
+
+```bash
+# prod
+docker compose -p include-cookie --env-file infra/.env.prod \
+  -f infra/docker-compose.yml -f infra/docker-compose.prod.yml up -d
+
+# dev (separate project + directory on the same host)
+docker compose -p include-cookie-dev --env-file infra/.env.dev \
+  -f infra/docker-compose.yml -f infra/docker-compose.dev.yml up -d
+```
+
+| File | Purpose |
+|---|---|
+| [`infra/docker-compose.yml`](infra/docker-compose.yml) | base — build definition, healthcheck |
+| [`infra/docker-compose.prod.yml`](infra/docker-compose.prod.yml) | GHCR `:latest`, `.env.prod`, own tunnel |
+| [`infra/docker-compose.dev.yml`](infra/docker-compose.dev.yml) | GHCR `:dev`, `.env.dev`, own tunnel |
+| [`infra/.env.prod.example`](infra/.env.prod.example) | prod deploy env template |
+| [`infra/.env.dev.example`](infra/.env.dev.example) | dev deploy env template |
+
+**How it reaches Catalog / lumi-auth / Bot / S3.** Those APIs are internal-key
+authenticated and deliberately not published to the host or the internet, so the compose
+overlays attach this container to the **lumispace stack's Docker network** as an external
+network — `catalog:3000`, `auth:8082`, `rustfs:9000` then resolve by service name. That
+network must already exist (`docker network ls`); override its name with
+`LUMISPACE_NETWORK` if your lumispace project name differs from `pandc` / `pandc-dev`.
+
+This is the one remaining coupling: co-location on a host, not shared code or data. If the
+lumispace stack is down, this app still serves — just with its catalog sections degraded,
+exactly as when those services are unreachable for any other reason.
+
+CI (`.github/workflows/`) builds+pushes the image and then deploys: `development` →
+`:dev` → `~/dockers/include-cookie-dev`, `master` → `:latest` →
+`~/dockers/include-cookie`. The `.env.prod`/`.env.dev` files are **not** shipped by CI —
+they hold secrets and live on the server only; the deploy fails with a clear message if
+one is missing.
+
 ## Testing
 
 ```bash
@@ -162,8 +208,8 @@ i18n/                  next-intl setup (uk locale)
 ## Contributing
 
 Standard flow: branch off `development`, open a PR against `development`. `master` is
-production — deploys are `development` → `master` merges, handled separately from this
-repo's day-to-day. Run `npm run lint` and `npm test` before opening a PR; a green
+production — merging `development` → `master` builds and **deploys** straight from this
+repo (see *Deploy*). Run `npm run lint` and `npm test` before opening a PR; a green
 `npm run build` locally is the closest thing to what CI checks.
 
 Keep the "everything optional, nothing crashes" architecture in mind for any new external

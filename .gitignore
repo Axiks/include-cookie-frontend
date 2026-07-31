@@ -32,6 +32,11 @@ yarn-error.log*
 .env*.local
 .env*.local.bak
 
+# deploy env files (infra/.env.dev, infra/.env.prod) — real secrets, never committed.
+# Only the *.example templates are tracked.
+.env.dev
+.env.prod
+
 # vercel
 .vercel
 

@@ -40,3 +40,53 @@ jobs:
             GIT_COMMIT=${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  # Own dev deploy — see the prod workflow for the rationale. Separate Compose project and
+  # separate directory from prod on the same host, attached to lumispace's DEV network.
+  deploy:
+    name: Deploy to server (dev)
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Copy compose files to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "infra/docker-compose.yml,infra/docker-compose.dev.yml"
+          strip_components: 1
+          target: $HOME/dockers/include-cookie-dev/
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        env:
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: GHCR_TOKEN,GHCR_USER
+          script: |
+            set -euo pipefail
+            retry() {
+              attempt=1
+              while true; do
+                if "$@"; then return 0; fi
+                if [ "$attempt" -ge 3 ]; then return 1; fi
+                echo "pull failed, retry $attempt/3 in 10s…"
+                attempt=$((attempt + 1))
+                sleep 10
+              done
+            }
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+            cd "$HOME/dockers/include-cookie-dev"
+            test -f .env.dev || { echo "ERROR: .env.dev missing on server — create it from infra/.env.dev.example"; exit 1; }
+            COMPOSE="docker compose -p include-cookie-dev --env-file .env.dev -f docker-compose.yml -f docker-compose.dev.yml"
+            retry $COMPOSE pull
+            $COMPOSE up -d --remove-orphans
+            docker logout ghcr.io || true
+            docker image prune -f || true
