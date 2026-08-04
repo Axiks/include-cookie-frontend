@@ -1,4 +1,10 @@
-# include-cookie-frontend
+# web
+
+> Repo moved 2026-08-04: `Axiks/include-cookie-frontend` → **`include-cookie/web`**.
+> The GHCR image and container keep the name `include-cookie-frontend` on purpose — they
+> live in the `ghcr.io/axiks/` namespace shared with the lumispace stack, where a bare
+> `web` would be ambiguous, and renaming them would mean re-pushing the image plus
+> editing the lumispace repo's compose files. Repo name and image name are decoupled.
 
 Public, read-only project-showcase site for the **LumiSpace** platform. Renders the
 projects catalog — the list, individual project pages — plus a handful of static pages
@@ -68,8 +74,8 @@ one.
 **Prerequisites:** Node.js ≥ 20, npm.
 
 ```bash
-git clone git@github.com:Axiks/include-cookie-frontend.git
-cd include-cookie-frontend
+git clone git@github.com:include-cookie/web.git
+cd web
 npm install
 cp .env.example .env.local
 ```
