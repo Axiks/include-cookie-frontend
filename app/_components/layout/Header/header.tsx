@@ -5,25 +5,21 @@ import BrandLogo from "./_components/brand-logo";
 import { LanguageSwitcher } from "./_components/language-switcher";
 import { ThemeToggle } from "./_components/theme-toggle";
 import { getTranslations } from "next-intl/server";
-import { projectsCatalogEnabled } from "@/lib/features";
 
 export default async function Header() {
   const t = await getTranslations('nav')
 
-  // The projects catalog nav link is independent of the (now-removed) login-gated features
-  // (it ships in production) but still needs the Catalog service to actually be up —
-  // the header renders on every page, so don't 500 the whole site or show a dead link
-  // when it isn't (e.g. local UI dev without the catalog running).
+  // The projects nav link needs the Catalog service to actually be up — the header renders
+  // on every page, so don't 500 the whole site or show a dead link when it isn't (e.g. local
+  // UI dev without the catalog running).
   let projectCount: number | null = null
-  if (projectsCatalogEnabled()) {
-    try {
-      projectCount = await countScopedProjects()
-    } catch (e) {
-      console.warn("[header] catalog unavailable, hiding projects link:", (e as Error).message)
-      projectCount = null
-    }
+  try {
+    projectCount = await countScopedProjects()
+  } catch (e) {
+    console.warn("[header] catalog unavailable, hiding projects link:", (e as Error).message)
+    projectCount = null
   }
-  const showProjectsLink = projectsCatalogEnabled() && projectCount !== null
+  const showProjectsLink = projectCount !== null
 
   return (
     <Box py="3">

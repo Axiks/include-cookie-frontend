@@ -96,10 +96,6 @@ See [`.env.example`](.env.example) for the full, current list with inline commen
 kept in sync with what the code actually reads (`grep -r process.env` is the source of
 truth if the two ever drift). A couple of non-service ones worth knowing about:
 
-- `DYNAMIC_FEATURES` — kill-switch for the whole read-only catalog (nav link, home block,
-  `/project` pages). `on` (default) shows it, `off` hides it entirely. The name predates the
-  2026-07-31 removal, when it also gated the login features — kept as-is to avoid an
-  unrelated rename.
 - `GIT_COMMIT` — shown in the UI as a build identifier. Auto-injected by the Docker build
   (`docker build --build-arg GIT_COMMIT=$(git rev-parse HEAD)`); leave it unset locally and
   it falls back to reading your local git HEAD.

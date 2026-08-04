@@ -6,7 +6,6 @@ import { LinkNeko } from "./_components/ui/link-neko";
 import { ProjectsShowcaseWidjet } from "./_components/ui/project-showcase";
 import { DynamicIcon, IconName } from "lucide-react/dynamic";
 import { getTranslations } from "next-intl/server";
-import { projectsCatalogEnabled } from "@/lib/features";
 
 export default async function Root() {
   // The projects block ships in production independent of login — but only
@@ -15,14 +14,12 @@ export default async function Root() {
   let lastProjects: Project[] = []
   let allProjects = 0
   let catalogAvailable = false
-  if (projectsCatalogEnabled()) {
-    try {
-      lastProjects = await getLastScopedProjects(4)
-      allProjects = await countScopedProjects()
-      catalogAvailable = true
-    } catch (e) {
-      console.warn("[home] catalog unavailable, rendering without projects:", (e as Error).message)
-    }
+  try {
+    lastProjects = await getLastScopedProjects(4)
+    allProjects = await countScopedProjects()
+    catalogAvailable = true
+  } catch (e) {
+    console.warn("[home] catalog unavailable, rendering without projects:", (e as Error).message)
   }
   const canSeeProjectsCount = allProjects - lastProjects.length
 
