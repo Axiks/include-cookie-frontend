@@ -27,7 +27,7 @@ export default async function Footer() {
 
           <Flex gap={{ initial: '4', sm: '5' }} align="center" wrap="wrap">
             <LinkNeko href="https://t.me/include_anime" name={t('telegram')} />
-            <LinkNeko href="https://github.com/Axiks/lumispace" name={t('github')} />
+            <LinkNeko href="https://github.com/include-cookie" name={t('github')} />
             <LinkNeko href="/support" name={t('support')} />
           </Flex>
         </Flex>
